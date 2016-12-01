@@ -1,16 +1,16 @@
 #include "MovableGameObject.h"
 
-MovableGameObject::MovableGameObject(sf::RenderWindow *window):GameObject(window)
+MovableGameObject::MovableGameObject(sf::RenderWindow *window, sf::Texture texture):GameObject(window, texture)
 {
 	SetWalls(true, true, true, true);
 }
 
-MovableGameObject::MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window):GameObject(size, position, color, window)
+MovableGameObject::MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window, sf::Texture texture):GameObject(size, position, color, window, texture)
 {
 	SetWalls(true, true, true, true);
 }
 
-MovableGameObject::MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window):GameObject(size, position, window)
+MovableGameObject::MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window, sf::Texture texture):GameObject(size, position, window, texture)
 {
 	SetWalls(true, true, true, true);
 }
@@ -42,6 +42,9 @@ void MovableGameObject::SetSpeed(float x, float y) {
 	this->speed.x = x;
 	this->speed.y = y;
 }
+sf::Vector2f MovableGameObject::GetSpeed() {
+	return speed;
+}
 void MovableGameObject::Move(){
 	
 	if (topWall)
@@ -49,6 +52,10 @@ void MovableGameObject::Move(){
 		if (view.getPosition().y <= 0)
 		{
 			SetDirection(-2, 1);
+			std::string soundFx = "bounce.wav";
+			buffer.loadFromFile(soundFx);
+			sound.setBuffer(buffer);
+			sound.play();
 		}
 	}
 	if (rightWall)
@@ -56,6 +63,10 @@ void MovableGameObject::Move(){
 		if (view.getPosition().x + view.getSize().x >= window->getSize().x)
 		{
 			SetDirection(-1, -2);
+			std::string soundFx = "bounce.wav";
+			buffer.loadFromFile(soundFx);
+			sound.setBuffer(buffer);
+			sound.play();
 		}
 	}
 	if (bottomWall)
@@ -63,6 +74,10 @@ void MovableGameObject::Move(){
 		if (view.getPosition().y + view.getSize().y >= window->getSize().y)
 		{
 			SetDirection(-2, -1);
+			std::string soundFx = "bounce.wav";
+			buffer.loadFromFile(soundFx);
+			sound.setBuffer(buffer);
+			sound.play();
 		}
 	}
 	if (leftWall)
@@ -70,6 +85,10 @@ void MovableGameObject::Move(){
 		if (view.getPosition().x <= 0)
 		{
 			SetDirection(1, -2);
+			std::string soundFx = "bounce.wav";
+			buffer.loadFromFile(soundFx);
+			sound.setBuffer(buffer);
+			sound.play();
 		}
 	}
 
@@ -119,8 +138,9 @@ bool MovableGameObject::CheckCollisionWith(GameObject *other)
 	sf::Vector2f pointOfContact = GetPointOfContact(other);
 	if (!inContact)
 	{
-		if (pointOfContact.x >= -1 && pointOfContact.x <= 1)
+		if (pointOfContact.x >= -1 && pointOfContact.x <= 1 && pointOfContact.y >= -1 && pointOfContact.y <= 1)
 		{
+			
 			other->Collided(pointOfContact);
 			this->Collided(pointOfContact);
 			inContact = true;
@@ -130,7 +150,7 @@ bool MovableGameObject::CheckCollisionWith(GameObject *other)
 	}
 	else
 	{
-		if (pointOfContact.x < 0)
+		if (pointOfContact.x < -1 || pointOfContact.x > 1 || pointOfContact.y < -1 || pointOfContact.y > 1)
 		{
 			inContact = false;
 		}
@@ -143,5 +163,5 @@ void MovableGameObject::Collided(sf::Vector2f point)
 {
 	int margin = 10;
 	SetDirection(point.x, point.y);
-	this->MoveTo(margin * direction.x, margin * direction.y);
+	//this->MoveTo(margin * direction.x, margin * direction.y);
 }

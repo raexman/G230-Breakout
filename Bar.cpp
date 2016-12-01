@@ -2,7 +2,7 @@
 
 
 
-Bar::Bar(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window):MovableGameObject(size, position, window)
+Bar::Bar(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window, sf::Texture texture):MovableGameObject(size, position, window, texture)
 {
 	Init();
 }
@@ -12,6 +12,8 @@ void Bar::Init()
 	speed.x = 500;
 	speed.y = 500;
 	isMoving = true;
+	view.setOutlineColor(sf::Color::Black);
+	view.setOutlineThickness(2);
 }
 
 Bar::~Bar()
@@ -47,5 +49,7 @@ void Bar::Control()
 
 void Bar::Collided(sf::Vector2f point)
 {
-
+	buffer.loadFromFile("bumper.wav");
+	sound.setBuffer(buffer);
+	sound.play();
 }

@@ -1,17 +1,18 @@
 #include "GameObject.h"
 
-GameObject::GameObject(sf::RenderWindow *window)
+GameObject::GameObject(sf::RenderWindow *window, sf::Texture texture)
 {
 	isActive = true;
 	this->window = window;
 	this->view.setPosition(0,0);
 	this->view.setSize(sf::Vector2f(100, 100));
 	this->view.setFillColor(sf::Color::White);
+	this->texture = texture;
 
 	Init();
 }
 
-GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window)
+GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window, sf::Texture texture)
 {
 	isActive = true;
 
@@ -19,11 +20,12 @@ GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color
 	this->view.setPosition(position);
 	this->view.setSize(size);
 	this->view.setFillColor(color);
+	this->texture = texture;
 
 	Init();
 }
 
-GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window)
+GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window, sf::Texture texture)
 {
 	isActive = true;
 
@@ -31,6 +33,7 @@ GameObject::GameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindo
 	this->view.setPosition(position);
 	this->view.setSize(size);
 	this->view.setFillColor(sf::Color::White);
+	this->texture = texture;
 
 	Init();
 
@@ -43,6 +46,7 @@ GameObject::~GameObject()
 void GameObject::Init()
 {
 	HP = 1;
+	this->view.setTexture(&texture);
 	Draw();
 }
 

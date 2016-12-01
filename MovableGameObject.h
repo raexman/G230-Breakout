@@ -13,15 +13,16 @@ protected:
 	bool isMoving;
 
 public:
-	MovableGameObject(sf::RenderWindow *window);
-	MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window);
-	MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window);
+	MovableGameObject(sf::RenderWindow *window, sf::Texture texture);
+	MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window, sf::Texture texture);
+	MovableGameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window, sf::Texture texture);
 	~MovableGameObject();
 	virtual void Update(float deltaTime);
 	virtual void Collided(sf::Vector2f point);
 
 	virtual void AddSpeed(float x, float y);
 	virtual void SetSpeed(float x, float y);
+	virtual sf::Vector2f GetSpeed();
 
 	virtual void StartMoving();
 	virtual void StopMoving();

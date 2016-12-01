@@ -14,6 +14,7 @@ protected:
 	sf::RectangleShape view;
 	sf::SoundBuffer buffer;
 	sf::Sound sound;
+	sf::Texture texture;
 	bool isActive;
 	int HP;
 
@@ -22,9 +23,9 @@ public:
 	bool inContact;
 
 	//Functions.
-	GameObject(sf::RenderWindow *window);
-	GameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window);
-	GameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window);
+	GameObject(sf::RenderWindow *window, sf::Texture texture);
+	GameObject(sf::Vector2f size, sf::Vector2f position, sf::RenderWindow *window, sf::Texture texture);
+	GameObject(sf::Vector2f size, sf::Vector2f position, sf::Color color, sf::RenderWindow *window, sf::Texture texture);
 	~GameObject();
 	//States.
 	virtual void Init();

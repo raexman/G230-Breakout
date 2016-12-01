@@ -16,17 +16,21 @@ void PlayMusic();
 void LoadBackground();
 void Init();
 void Menu();
-void PlayerVsCPUMatch();
-void PlayerVsPlayerMatch();
-void FourWayMatch();
+void PlayLevel(int level = 0);
 void Victory();
 void Exit();
+void CreateLevel1Bricks();
+void CreateLevel2Bricks();
+void CreateLevel3Bricks();
+void CreateLevel4Bricks();
+void CheckBrickCollisions(Ball *ball);
 
 using namespace std;
 
-vector<unique_ptr<GameObject>> bricks;
+vector<unique_ptr<Brick>> bricks;
 float deltaTime;
 bool isPlaying;
+bool isWon;
 bool isMenu;
 int matchMode;
 float maxScore = 4;
@@ -36,17 +40,27 @@ sf::Font font;
 sf::RenderWindow *window;
 sf::Sprite background;
 sf::Texture bgTexture;
+sf::Texture barTexture;
+sf::Texture ballTexture;
+sf::Texture brickTexture;
+sf::Vector2f speed(200, 200);
+
+sf::SoundBuffer buffer;
+sf::Sound sound;
 
 int margin = 10;
-int rows = 6;
+int rows = 4;
 int cols = 8;
+int score = 0;
+int rounds = 0;
+int unbreakable = 0;
 
-int main()
+int WinMain()
 {
 	font.loadFromFile("AmericanCaptain.ttf");
 
-	window = new sf::RenderWindow(sf::VideoMode(800, 600), "PingPong!");
-	bgTexture.loadFromFile("background.jpg");
+	window = new sf::RenderWindow(sf::VideoMode(800, 600), "WRECK-OUT!");
+	bgTexture.loadFromFile("background2.jpg");
 	background.setTexture(bgTexture);
 
 	Init();
@@ -72,16 +86,20 @@ void Menu()
 	{
 		sf::Text title;
 		title.setFont(font);
-		title.setString("ULTRA PONG 20XX");
+		title.setString("WRECK-OUT!");
 		title.setCharacterSize(125);
-		title.setFillColor(sf::Color::White);
-		title.setPosition((window->getSize().x - title.getLocalBounds().width) * 0.5, 100);
+		title.setFillColor(sf::Color::Yellow);
+		title.setOutlineColor(sf::Color::Black);
+		title.setOutlineThickness(10);
+		title.setPosition((window->getSize().x - title.getLocalBounds().width) * 0.5, 150);
 
 		sf::Text menu;
 		menu.setFont(font);
-		menu.setString("[1] Player vs CPU \n[2] Player vs Player\n[3] 4-Player Game");
+		menu.setString("PRESS SPACE TO PLAY");
 		menu.setCharacterSize(48);
 		menu.setFillColor(sf::Color::White);
+		menu.setOutlineColor(sf::Color::Black);
+		menu.setOutlineThickness(10);
 		menu.setPosition((window->getSize().x - menu.getLocalBounds().width) * 0.5, title.getPosition().y + title.getGlobalBounds().height + 50);
 
 		sf::Event event;
@@ -100,81 +118,223 @@ void Menu()
 		window->draw(title);
 		window->display();
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space))
 		{
 			mode = 1;
-			optionChosen = true;
-		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2))
-		{
-			mode = 2;
-			optionChosen = true;
-		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3))
-		{
-			mode = 3;
-			optionChosen = true;
-		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4))
-		{
-			mode = 4;
-			optionChosen = true;
-		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
-		{
-			mode = 0;
 			optionChosen = true;
 		}
 	}
 	switch (mode)
 	{
 		case 0: Exit();
-		case 1: PlayerVsCPUMatch(); break;
+		case 1: PlayLevel(); break;
 		default:break;
 	}
 }
-
-void CreateBricks()
+void CreateLevel1Bricks()
 {
-	int brickWidth = (window->getSize().x - margin * (cols + 1)) / cols;
+
+	int brickWidth = (window->getSize().x * 0.80f) / cols;
 	int brickHeight = brickWidth * 0.4;
 
 	for (int i = 0; i < rows*cols; i++)
 	{
-		Brick *go = new Brick(sf::Vector2f(brickWidth, brickHeight), sf::Vector2f(i%cols * (brickWidth + margin) + margin, (i /cols) * (brickHeight + margin) + margin ), sf::Color::Blue, window);
-		bricks.push_back(unique_ptr<GameObject>(go));
+		Brick *go;
+		brickTexture.loadFromFile("brick_destroyed.png");
+		go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::White, window, brickTexture);
+		bricks.push_back(unique_ptr<Brick>(go));
 	}
 }
-void CheckCollisions(GameObject *go)
+void CreateLevel2Bricks()
+{
+
+	int brickWidth = (window->getSize().x * 0.80f) / cols;
+	int brickHeight = brickWidth * 0.4;
+
+	for (int i = 0; i < rows*cols; i++)
+	{
+		Brick *go;
+		if (i / cols >= 0 && i / cols <= 1)
+		{
+			brickTexture.loadFromFile("brick_damaged.png");
+			go = new Brick(2, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::Blue, window, brickTexture);
+		}
+		else
+		{
+			brickTexture.loadFromFile("brick_destroyed.png");
+			go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::White, window, brickTexture);
+		}
+
+		bricks.push_back(unique_ptr<Brick>(go));
+	}
+}
+void CreateLevel3Bricks()
+{
+
+	int brickWidth = (window->getSize().x * 0.80f) / cols;
+	int brickHeight = brickWidth * 0.4;
+
+	for (int i = 0; i < rows*cols; i++)
+	{
+		Brick *go;
+		if (i / cols >= 0 && i / cols <= 1)
+		{
+			brickTexture.loadFromFile("brick.png");
+			go = new Brick(3, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::Green, window, brickTexture);
+		}
+		else if (i/cols >= 2 && i/cols <= 3)
+		{
+			brickTexture.loadFromFile("brick_damaged.png");
+			go = new Brick(2, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::Blue, window, brickTexture);
+		}
+		else
+		{
+			brickTexture.loadFromFile("brick_destroyed.png");
+			go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i /cols) * (brickHeight + margin) + margin ), sf::Color::White, window, brickTexture);
+		}
+
+		bricks.push_back(unique_ptr<Brick>(go));
+	}
+}
+
+void CreateLevel4Bricks()
+{
+	unbreakable = 0;
+	int brickWidth = (window->getSize().x * 0.80f) / cols;
+	int brickHeight = brickWidth * 0.4;
+
+	for (int i = 0; i < rows*cols; i++)
+	{
+		Brick *go;
+		
+		int type = rand() % int(cols*rows*0.5);
+
+		switch (type)
+		{
+			case 0:
+			case 1:
+				brickTexture.loadFromFile("brick.png");
+				go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::Magenta, window, brickTexture);
+				go->PowerUp = "drill";
+				break;
+			case 2:
+				brickTexture.loadFromFile("brick.png");
+				go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::Blue, window, brickTexture);
+				go->PowerUp = "slowmo";
+				break;
+			case 3:
+			case 4:
+			case 5:
+				brickTexture.loadFromFile("brick.png");
+				go = new Brick(3, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color(100, 100, 100, 255), window, brickTexture);
+				go->isInvincible = true;
+				unbreakable++;
+				break;
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+				brickTexture.loadFromFile("brick_damaged.png");
+				go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color(0, 200, 80, 255) , window, brickTexture);
+				go->isInvisible = true;
+				break;
+			default:
+				brickTexture.loadFromFile("brick_destroyed.png");
+				go = new Brick(1, sf::Vector2f(brickWidth - margin, brickHeight), sf::Vector2f(i%cols * brickWidth + window->getSize().x * 0.1f, (i / cols) * (brickHeight + margin) + margin), sf::Color::White, window, brickTexture);
+				break;
+		}
+
+		bricks.push_back(unique_ptr<Brick>(go));
+	}
+}
+
+void CheckBrickCollisions(Ball *ball)
 {
 	for (int i = 0; i < bricks.size(); i++)
 	{
-		GameObject *br = bricks[i].get();
-		bool hasCollided = go->CheckCollisionWith(br);
-		if (hasCollided && br->Dead())
+		Brick *br = bricks[i].get();
+		bool hasCollided = ball->CheckCollisionWith(br, true);
+		if (hasCollided)
 		{
-			bricks.erase(bricks.begin() + i);
-			continue;
+			std::string soundFx = "hit.wav";
+			score++;
+
+			if (bricks[i]->PowerUp == "drill")
+			{
+				soundFx = "powerup.wav";
+				ball->isDrilling = true;
+			}
+			else if (bricks[i]->PowerUp == "slowmo")
+			{
+				soundFx = "powerup.wav";
+				ball->SetSpeed(100, 100);
+				ball->isDrilling = false;
+			}
+			
+			if (br->Dead())
+			{
+				soundFx = "explosion.wav";
+				buffer.loadFromFile(soundFx);
+				sound.setBuffer(buffer);
+				sound.play();
+				bricks.erase(bricks.begin() + i);
+				continue;
+			}
+
+			buffer.loadFromFile(soundFx);
+			sound.setBuffer(buffer);
+			sound.play();
 		}
 	}
 }
-void PlayerVsCPUMatch()
+void PlayLevel(int level)
 {
-	/*
-	MovableGameObject mover(sf::Vector2f(100, 100), sf::Vector2f((window->getSize().x - 50)*0.5f, (window->getSize().y - 50)*0.5f), sf::Color::Yellow, window);
-	mover.StartMoving();
-	mover.SetSpeed(660, 660);
-	mover.SetDirection(1, 1);
+	barTexture.loadFromFile("paddle.jpg");
+	ballTexture.loadFromFile("ball.png");
 
-	MovableGameObject mover2(sf::Vector2f(20, 20), sf::Vector2f(0, (window->getSize().y - 50)*0.5f), sf::Color::Magenta, window);
-	mover2.StartMoving();
-	mover2.SetSpeed(500, 500);
-	mover2.SetDirection(-1, -1);
-	*/
+	Bar bar(sf::Vector2f(100, 30), sf::Vector2f((window->getSize().x - 50) * 0.5f, window->getSize().y - 80), window, barTexture);
+	Ball ball(speed, 3, sf::Vector2f(20,20), sf::Vector2f(0,0), window, ballTexture);
+
+	level = level % 4 + 1;
+
+	switch (level)
+	{
+		case 1:
+			CreateLevel1Bricks();
+			break;
+		case 2:
+			CreateLevel2Bricks();
+			break;
+		case 3:
+			CreateLevel3Bricks();
+			break;
+		case 4:
+			CreateLevel4Bricks();
+			break;
+		default:
+			CreateLevel1Bricks();
+			break;
+	}
+
 	
-	Bar bar(sf::Vector2f(100, 40), sf::Vector2f((window->getSize().x - 50) * 0.5f, window->getSize().y - 80), window);
-	Ball ball(sf::Vector2f(20,20), sf::Vector2f(0,0), window);
-	CreateBricks();
+
+	sf::Text title;
+	title.setFont(font);
+	title.setString("Lives: " + to_string(ball.GetLives()));
+	title.setCharacterSize(21);
+	title.setFillColor(sf::Color::Yellow);
+	title.setOutlineColor(sf::Color::Black);
+	title.setOutlineThickness(2);
+	title.setPosition(window->getSize().x - title.getLocalBounds().width - margin* 2, window->getSize().y - title.getLocalBounds().height - margin * 2);
+
+	sf::Text scoreLabel;
+	scoreLabel.setFont(font);
+	scoreLabel.setString("Score: " + to_string(score));
+	scoreLabel.setCharacterSize(21);
+	scoreLabel.setFillColor(sf::Color::Yellow);
+	scoreLabel.setOutlineColor(sf::Color::Black);
+	scoreLabel.setOutlineThickness(2);
+	scoreLabel.setPosition(margin * 2, window->getSize().y - scoreLabel.getLocalBounds().height - margin * 2);
 
 	sf::Clock clock;
 	isPlaying = true;
@@ -200,11 +360,15 @@ void PlayerVsCPUMatch()
 		//Draw window graphics.
 		window->draw(background);
 		
-		//Draw object graphics.
-		//mover.Update(deltaTime);
-		//mover2.Update(deltaTime);
-		bar.Update(deltaTime);
+		//Draw title.
+		title.setString("Lives: " + to_string(ball.GetLives()));
+		scoreLabel.setString("Score: " + to_string(score));
+		window->draw(title);
+		window->draw(scoreLabel);
 
+		bar.Update(deltaTime);
+		
+		//Draw ball.
 		//Check ball status.
 		if (ball.isResting)
 		{
@@ -213,9 +377,9 @@ void PlayerVsCPUMatch()
 			float ballY = bar.GetPosition().y - ball.GetSize().y;
 			ball.SetPosition(ballX, ballY);
 		}
-
 		ball.Update(deltaTime);
 		
+		//Draw bricks.
 		for (int i = 0; i < bricks.size(); i++)
 		{
 			bricks[i]->Update(deltaTime);
@@ -224,19 +388,85 @@ void PlayerVsCPUMatch()
 
 		
 		//Check collisions.
-		CheckCollisions(&ball);
-		ball.CheckCollisionWith(&bar);
+		CheckBrickCollisions(&ball);
+		ball.CheckCollisionWith(&bar, false);
+		
 		//Display scene.
 		window->display();
+
+		if (ball.Dead())
+		{
+			isPlaying = false;
+		}
+
+		if ((bricks.size() - unbreakable) == 0)
+		{
+			isPlaying = false;
+			isWon = true;
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num1))
+		{
+			isPlaying = false;
+			level = -1;
+			isWon = true;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num2))
+		{
+			isPlaying = false;
+			level = 0;
+			isWon = true;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num3))
+		{
+			isPlaying = false;
+			level = 1;
+			isWon = true;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Num4))
+		{
+			isPlaying = false;
+			level = 2;
+			isWon = true;
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::J))
+		{
+			ball.AddSpeed(1, 1);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::K))
+		{
+			ball.AddSpeed(-1, -1);
+		}
+
+
 	}
 
-	Victory();
+	bricks.erase(bricks.begin(), bricks.end());
+	speed = ball.GetSpeed();
+
+	if (!isWon)
+		Victory();
+	else
+	{
+		std::string soundFx = "cheers.wav";
+		buffer.loadFromFile(soundFx);
+		sound.setBuffer(buffer);
+		sound.play();
+		isWon = false;
+		PlayLevel(level + 1);
+	}
 
 }
 
 
 void Victory()
 {
+	std::string soundFx = "denied.wav";
+	buffer.loadFromFile(soundFx);
+	sound.setBuffer(buffer);
+	sound.play();
+
 	bool optionChosen = false;
 	while (window->isOpen() && !optionChosen)
 	{
